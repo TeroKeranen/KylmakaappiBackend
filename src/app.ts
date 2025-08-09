@@ -74,6 +74,9 @@ app.get("/state/:deviceId", (req, res) => {
     });
   });
 
+  app.get("/health", (_req, res) => res.send("ok"));
+  app.get("/", (_req, res) => res.redirect("/health"));
+
 
 
 // Portti .env:stä tai 3000 oletuksena
