@@ -51,5 +51,5 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
   },
-  "include": ["src", "scripts"]
+  "include": ["src", "src/scripts"]
 }

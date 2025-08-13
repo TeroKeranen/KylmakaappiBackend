@@ -9,7 +9,7 @@
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
     "heroku-postbuild": "npm run build",
-    "gen:qrs": "ts-node scripts/gen-qrs.ts"
+    "gen:qrs": "ts-node src/scripts/gen-qrs.ts"
   },
   "engines": {
     "node": "22.18.0"
