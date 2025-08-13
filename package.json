@@ -8,7 +8,8 @@
     "start": "node dist/app.js",
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "heroku-postbuild": "npm run build"
+    "heroku-postbuild": "npm run build",
+    "gen:qrs": "ts-node scripts/gen-qrs.ts"
   },
   "engines": {
     "node": "22.18.0"
@@ -16,7 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  
   "dependencies": {
     "build": "^0.1.4",
     "cors": "^2.8.5",
@@ -24,6 +24,7 @@
     "express": "^5.1.0",
     "mqtt": "^5.14.0",
     "npm": "^11.5.2",
+    "qrcode": "^1.5.4",
     "run": "^1.5.0",
     "zod": "^4.0.16"
   },
@@ -31,6 +32,8 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.2.1",
+    "@types/qrcode": "^1.5.5",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2"
   }

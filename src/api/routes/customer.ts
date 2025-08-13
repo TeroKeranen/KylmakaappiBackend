@@ -5,12 +5,13 @@ const router = Router();
 
 
 const codeToDevice = new Map<string, string>([
-    ["DEV-001", "dev-001"],
+    ["DEV-0012", "dev-001"],
 ]);
 
 
 // (Valinnainen) allekirjoituksen tarkistus QR:lle: ?sig=...
 const QR_SECRET = process.env.QR_SECRET || "";
+
 function validSig(code: string, sig?: string): boolean {
   if (!QR_SECRET || !sig) return true; // ei käytössä -> hyväksy
   const mac = createHmac("sha256", QR_SECRET).update(code).digest("hex");

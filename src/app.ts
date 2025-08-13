@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import mqtt from "mqtt";
 import customerRoutes from "./api/routes/customer";
+import landingRoutes from "./api/routes/landing";
 
 // -------------------- App setup --------------------
 const app = express();
@@ -10,6 +11,7 @@ app.use(cors());               // dev: vapaa. tuotannossa: app.use(cors({ origin
 app.use(express.json());       // json-bodyn parsiminen
 
 app.use(customerRoutes); // nyt /resolve ja /pay ovat käytössä
+app.use(landingRoutes);
 
 // -------------------- MQTT --------------------
 const { MQTT_URL, MQTT_USER, MQTT_PASS } = process.env; // Haetaan MQTT-yhdeyden asetukset ympäristömuuttujista
