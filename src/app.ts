@@ -2,18 +2,24 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import mqtt from "mqtt";
+import customerRoutes from "./api/routes/customer";
 
 // -------------------- App setup --------------------
 const app = express();
 app.use(cors());               // dev: vapaa. tuotannossa: app.use(cors({ origin: ["https://oma-frontti.com"] }))
 app.use(express.json());       // json-bodyn parsiminen
 
+app.use(customerRoutes); // nyt /resolve ja /pay ovat käytössä
+
 // -------------------- MQTT --------------------
-const { MQTT_URL, MQTT_USER, MQTT_PASS } = process.env;
+const { MQTT_URL, MQTT_USER, MQTT_PASS } = process.env; // Haetaan MQTT-yhdeyden asetukset ympäristömuuttujista
+
+// Jos joku näistä puuttuu, heitetään virhe ja lopetetaan ohjelma
 if (!MQTT_URL || !MQTT_USER || !MQTT_PASS) {
   throw new Error("Missing MQTT envs: MQTT_URL, MQTT_USER, MQTT_PASS");
 }
 
+// Yhdistetään MQTT-brokeriin
 const m = mqtt.connect(MQTT_URL, {
   username: MQTT_USER,
   password: MQTT_PASS,
@@ -22,29 +28,38 @@ const m = mqtt.connect(MQTT_URL, {
 
 type DeviceState = Record<string, any>;
 
-const lastState = new Map<string, DeviceState>();
-const lastSeen  = new Map<string, number>();
+const lastState = new Map<string, DeviceState>(); // Tallennetaan viimeisin laitteelta tullut tila
+const lastSeen  = new Map<string, number>(); // Tallennetaan milloin laitteelta viimeksi kuultiin (aikaleima)
 
-// SSE-asiakkaat per deviceId
+// Tallennetaan kaikki SSE-yhteydet per laite
+// (Nämä ovat React Native -sovelluksia, jotka kuuntelevat reaaliaikaista dataa)
 const sseClients = new Map<string, Set<express.Response>>();
 
+// Kun MQTT-yhteys muodostuu onnistuneesti:
 m.on("connect", () => {
   console.log("MQTT connected");
+  // Tilataan kaikki topicit muodossa devices/<deviceId>/state
   m.subscribe("devices/+/state", { qos: 1 });
 });
 
+
+// Kun MQTT:ltä tulee viesti:
 m.on("message", (topic, payload) => {
+  // Etsitään laite-id topicista
   const match = /^devices\/([^/]+)\/state$/.exec(String(topic));
   if (!match) return;
 
-  const deviceId = match[1]!; // <-- non-null assertion
+  const deviceId = match[1]!; // Laite-id
 
   try {
-    const data = JSON.parse(payload.toString());
+    const data = JSON.parse(payload.toString()); // Muutetaan JSON-teksti JavaScript-olioksi
+
+    // Tallennetaan laitteelta saatu tila ja aikaleima
     lastState.set(deviceId, data);
     lastSeen.set(deviceId, Date.now());
 
-    // pushataan SSE-asiakkaille
+    // Jos SSE-yhteyksiä on olemassa tälle laitteelle,
+    // lähetetään niille uusi tila heti
     const clients = sseClients.get(deviceId);
     if (clients && clients.size) {
       const frame = `data: ${JSON.stringify({
@@ -52,6 +67,8 @@ m.on("message", (topic, payload) => {
         state: data,
         lastSeen: lastSeen.get(deviceId),
       })}\n\n`;
+
+      // Kirjoitetaan kaikille asiakkaille uusi data
       for (const res of clients) res.write(frame);
     }
   } catch (e) {
@@ -64,11 +81,18 @@ m.on("message", (topic, payload) => {
 // LED ON/OFF
 app.post("/led", (req, res) => {
   const { deviceId, state } = req.body || {};
+
+  // Tarkistetaan että parametrit ovat oikein
   if (!deviceId || !["on", "off"].includes(state)) {
     return res.status(400).json({ ok: false, error: "Bad params" });
   }
+
+  // MQTT-topic johon lähetetään komento
   const topic = `devices/${deviceId}/cmd`;
+  // Komennon sisältö
   const msg = JSON.stringify({ led: state });
+
+  // Lähetetään komento laitteelle MQTT:n kautta
   m.publish(topic, msg, { qos: 1 }, (err) => {
     if (err) return res.status(500).json({ ok: false, error: String(err) });
     res.json({ ok: true });
@@ -99,7 +123,7 @@ app.get("/state/:deviceId", (req, res) => {
   });
 });
 
-// SSE: live-tilavirta ilman pollingia
+// SSE: reaaliaikainen tilavirta ilman jatkuvaa kyselyä
 app.get("/events/:deviceId", (req, res) => {
   const id = req.params.deviceId!; // <-- non-null assertion
 
