@@ -21,14 +21,25 @@ function validSig(code: string, sig?: string) {
   
     // Tässä voit yrittää avata appin custom-scheme:llä, jos sellainen on:
     // const appLink = `kylmakaappi://device?code=${encodeURIComponent(code)}`;
+
+    const appLink = `kylmakaappi://device?code=${encodeURIComponent(code)}`;
   
     res.type("html").send(`
-      <meta name="viewport" content="width=device-width,initial-scale=1">
-      <h2>Koodi luettu</h2>
-      <p>Laitteen asiakaskoodi: <b>${code}</b></p>
-      <p>Avaa sovellus ja syötä koodi, tai jatka asiakkaanäkymään webissä (tulevaa):</p>
-      <p><a href="/web-pay?code=${encodeURIComponent(code)}">Jatka webissä</a></p>
-    `);
+      <!doctype html><html><head>
+      <meta name="viewport" content="width=device-width,initial-scale=1" />
+      <title>Avaamassa sovellusta…</title>
+      <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;margin:24px}</style>
+      </head><body>
+      <h1>Avaamassa sovellusta…</h1>
+      <p>Koodi: <b>${code}</b></p>
+      <p><a id="open" href="${appLink}">Avaa sovellus</a></p>
+      <script>
+        // Yritä automaattisesti, joillakin selaimilla vaaditaan myös käyttäjäklikkaus
+        setTimeout(function(){ location.href=${JSON.stringify(appLink)}; }, 250);
+      </script>
+      <p>Ei toimi? Avaa sovellus ja syötä koodi käsin, tai jatka webissä.</p>
+      </body></html>
+        `);
   });
   
   export default router;
