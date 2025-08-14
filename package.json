@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "tsx watch src/app.ts",
-    "start": "node dist/app.js",
-    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p .",
     "test": "echo \"Error: no test specified\" && exit 1",
     "heroku-postbuild": "npm run build",
     "gen:qrs": "ts-node src/scripts/gen-qrs.ts"
