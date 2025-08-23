@@ -71,4 +71,18 @@ router.post("/motor", (req, res) => {
   });
 });
 
+// POST /motor/pay
+router.post("/motor/pay", (req, res) => {
+  const { deviceId, dir = "fwd" } = req.body || {};
+  if (!deviceId || !["fwd", "rev"].includes(dir)) {
+    return res.status(400).json({ ok: false, error: "Bad params" });
+  }
+  const topic = `devices/${deviceId}/cmd`;
+  const msg = JSON.stringify({ cmd: "pay", dir });
+  m.publish(topic, msg, { qos: 1 }, (err) => {
+    if (err) return res.status(500).json({ ok: false, error: String(err) });
+    res.json({ ok: true });
+  });
+});
+
 export default router;
